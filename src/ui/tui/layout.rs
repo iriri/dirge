@@ -37,7 +37,7 @@ pub const MAX_INPUT_ROWS: u16 = 8;
 /// Layout rows top → bottom:
 ///
 /// ```text
-/// row 0                       top_frame    ───[AGENT STATUS]───╭───[AGENT LOG STREAM]───╮───[SYSTEM]───
+/// row 0                       top_frame    ─── AGENT STATUS ───╭─── AGENT LOG STREAM ───╮─── SYSTEM ───
 /// rows 1..=chat_bot_frame-1   chat / left_panel / right_panel  (chat │ on each side)
 /// row chat_bot_frame          chat closes (╰───╯ inside chat band, blanks outside)
 /// row bottom_strip_top        avatar/input top frame  (╭───╮ inside chat band)

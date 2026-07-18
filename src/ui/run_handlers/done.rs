@@ -369,7 +369,6 @@ pub(crate) async fn finish_done(
     ctx.renderer.commit_stream();
 
     ctx.renderer.write_line("", Color::White)?;
-    ctx.renderer.write_line("", Color::White)?;
     // Phase 3: persist structured tool calls
     // alongside the assistant text so the next
     // resume sees the full tool_use/tool_result

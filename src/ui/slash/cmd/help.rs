@@ -4,7 +4,6 @@
 use crate::sync_util::LockExt;
 
 use crate::ui::slash::{SlashCtx, c_agent, c_result};
-use crate::ui::theme;
 
 pub(crate) async fn cmd_help(ctx: &mut SlashCtx<'_>) -> anyhow::Result<()> {
     let renderer = &mut *ctx.renderer;
@@ -55,7 +54,7 @@ pub(crate) async fn cmd_help(ctx: &mut SlashCtx<'_>) -> anyhow::Result<()> {
     renderer.write_line("  dirge --help", c_result())?;
     renderer.write_line("  man dirge.1    OR    dirge help", c_result())?;
     renderer.write_line("  (docs/ for guides on agents, permissions, skills, prompts, DAP, plugins, themes, and microVMs)",
-        theme::dim(),
+        c_result(),
     )?;
 
     renderer.write_line("", c_agent())?;

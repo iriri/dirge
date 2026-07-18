@@ -37,7 +37,7 @@ use super::tool_display::CollapsedToolResult;
 
 /// Recent-tool-activity ticker capacity (left panel). Mirrors the prior
 /// `TOOL_ACTIVITY_CAP` local.
-pub(crate) const TOOL_ACTIVITY_CAP: usize = 8;
+pub(crate) const TOOL_ACTIVITY_CAP: usize = 12;
 
 /// Which collapsed block the Ctrl+O expand/collapse toggle targets — the
 /// most recently truncated thinking burst or tool/command output. `None`

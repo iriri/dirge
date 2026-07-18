@@ -24,7 +24,6 @@
 //!   RUST_LOG=dirge::ui::chamber=trace cargo test … -- --nocapture
 
 use ansi_to_tui::IntoText;
-use crossterm::style::Color;
 
 use crate::cli::Cli;
 use crate::config::Config;
@@ -64,9 +63,8 @@ fn simulate_tool_call(ctx: &mut RunCtx<'_>, id: &str, name: &str, args: serde_js
     *ctx.last_tool_name = Some(name.to_string());
     *ctx.last_tool_call_id = Some(id.to_string());
 
-    // Paint the chamber TOP: spacer + header.
+    // Paint the chamber TOP: header.
     *ctx.chamber_top_start = Some(ctx.renderer.buffer_len());
-    ctx.renderer.write_line("", Color::White).expect("spacer");
     let upper = name.to_ascii_uppercase();
     let raw_value = format_tool_banner_value(name, &args);
     let raw_value = sanitize_output(&raw_value).into_string();
@@ -692,16 +690,25 @@ fn chamber_top_banner_parses_to_single_line() {
     }
 }
 
-/// The spacer row written before each chamber TOP — `write_line("",
-/// Color::White)`. Empty string. Document the actual behaviour.
-#[test]
-fn empty_spacer_into_text_behaviour() {
-    let parsed = "".into_text().expect("parse");
-    assert!(
-        parsed.lines.len() <= 1,
-        "empty string parsed to {} lines",
-        parsed.lines.len()
+#[tokio::test]
+async fn tool_chamber_has_no_leading_spacer_row() {
+    let (cli, cfg, mut session, mut renderer) = fresh_scaffold();
+    let mut state = State::new();
+    let mut ctx = make_ctx(&mut renderer, &mut session, &mut state, &cli, &cfg);
+
+    simulate_tool_call(
+        &mut ctx,
+        "call-0",
+        "read",
+        serde_json::json!({"path": "file.txt"}),
     );
+
+    let lines: Vec<String> = renderer
+        .buffer_lines()
+        .into_iter()
+        .map(str::to_string)
+        .collect();
+    assert!(lines.first().is_some_and(|line| line.starts_with('╭')));
 }
 
 /// Final aggressive stress test: mimic the issue's exact reproduction

@@ -1,7 +1,7 @@
 //! Top + chat-bottom frame widgets.
 //!
 //! The unified top frame paints
-//! `───[AGENT STATUS]───╭───[AGENT LOG STREAM]───╮───[SYSTEM]───`
+//! `─── AGENT STATUS ───╭─── AGENT LOG STREAM ───╮─── SYSTEM ───`
 //! across the full terminal width. The chat-bottom frame paints
 //! `╰───╯` inside the chat band only — side panel rows below the
 //! frame are left blank so the bottom strip doesn't collide with
@@ -20,18 +20,18 @@ use ratatui::widgets::Widget;
 use super::layout::Layout;
 
 /// Title text shown in the left panel section of the top frame.
-pub const LEFT_TITLE: &str = "[AGENT STATUS]";
+pub const LEFT_TITLE: &str = " AGENT STATUS ";
 /// Title text shown in the chat section of the top frame.
-pub const CHAT_TITLE: &str = "[AGENT LOG STREAM]";
+pub const CHAT_TITLE: &str = " AGENT LOG STREAM ";
 /// Title text shown in the right panel section of the top frame.
-pub const RIGHT_TITLE: &str = "[SYSTEM]";
+pub const RIGHT_TITLE: &str = " SYSTEM ";
 
 /// Top frame widget — paints row 0 across the full width.
 ///
 /// Glyph layout:
 ///
 /// ```text
-/// ───[AGENT STATUS]───╭───[AGENT LOG STREAM]───╮───[SYSTEM]───
+/// ─── AGENT STATUS ───╭─── AGENT LOG STREAM ───╮─── SYSTEM ───
 /// └── left_panel ───┘└─ chat outer (incl. │) ─┘└─ right_panel ┘
 /// ```
 ///
@@ -165,7 +165,7 @@ impl<'a> Widget for ChatBotFrame<'a> {
     }
 }
 
-/// Paint `───[title]───` of exactly `width` cells starting at
+/// Paint a titled horizontal run of exactly `width` cells starting at
 /// `(x, y)`, centered. When `width < title.chars().count()` the
 /// title is dropped (all `─`).
 fn paint_titled_horizontal(
@@ -254,13 +254,13 @@ mod tests {
             .collect();
 
         // Expected:
-        // cols [0,18]   → ───[AGENT STATUS]─── centered in 19 cells
-        //   pad=19-14=5, left=2, right=3, so: ──[AGENT STATUS]───
+        // cols [0,18]   → ─── AGENT STATUS ─── centered in 19 cells
+        //   pad=19-14=5, left=2, right=3, so: ── AGENT STATUS ───
         // col 19        → ╭
-        // cols [20,139] → ───[AGENT LOG STREAM]─── in 120 cells
+        // cols [20,139] → ─── AGENT LOG STREAM ─── in 120 cells
         //   pad=120-18=102, left=51, right=51 ─*51 + title + ─*51
         // col 140       → ╮
-        // cols [141,159] → ───[SYSTEM]─── in 19 cells
+        // cols [141,159] → ─── SYSTEM ─── in 19 cells
         //   pad=19-8=11, left=5, right=6
         let expected_left = format!("{}{}{}", "─".repeat(2), LEFT_TITLE, "─".repeat(3));
         let expected_chat = format!("{}{}{}", "─".repeat(51), CHAT_TITLE, "─".repeat(51));
@@ -270,7 +270,7 @@ mod tests {
     }
 
     /// Narrow terminal: side panels collapse, top frame is just
-    /// ╭───[AGENT LOG STREAM]───╮ filling cols [0, cols-1].
+    /// ╭─── AGENT LOG STREAM ───╮ filling cols [0, cols-1].
     #[test]
     fn top_frame_narrow_terminal() {
         let layout = Layout::new(40, 10, 1);

@@ -110,13 +110,10 @@ pub(crate) fn handle_tool_call(
     // Output lines below get `│ ` chamber rows; closed by `╰────╯` after the
     // ToolResult.
     let upper = name.to_ascii_uppercase();
-    // Record the buffer position BEFORE the spacer + header — used by
-    // passive close to drop the chamber entirely if no body content follows
-    // (parallel tool calls).
+    // Record the buffer position BEFORE the header — used by passive close
+    // to drop the chamber entirely if no body content follows (parallel tool
+    // calls).
     *ctx.chamber_top_start = Some(ctx.renderer.buffer_len());
-    // Blank line BEFORE the chamber top so the eye has an anchor between
-    // dense prior output and the new tool chamber.
-    ctx.renderer.write_line("", Color::White)?;
     let raw_value = format_tool_banner_value(name, args);
     let raw_value = sanitize_output(&raw_value).into_string();
     // dirge-ghpf: chamber TOP as a reflowing block so it re-boxes on resize

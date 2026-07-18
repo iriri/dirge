@@ -117,7 +117,6 @@ pub(crate) async fn handle_tool_result(
             let upper = resolved_name.to_ascii_uppercase();
             let raw_value = format_tool_banner_value(&resolved_name, &resolved_args);
             let raw_value = sanitize_output(&raw_value).into_string();
-            ctx.renderer.write_line("", Color::White)?;
             // dirge-ghpf: reflowing chamber TOP.
             ctx.renderer.write_chamber_top(upper, raw_value, c_tool())?;
             *ctx.tool_chamber_open = true;
@@ -303,10 +302,9 @@ pub(crate) async fn handle_tool_result(
                         // content lines below.
                         ctx.renderer.write_chamber_row(txt, theme::dim(), None)?;
                     } else if l.starts_with('+') {
-                        ctx.renderer
-                            .write_chamber_row(txt, Color::Green, Some(22))?;
+                        ctx.renderer.write_chamber_row(txt, Color::Green, None)?;
                     } else if l.starts_with('-') {
-                        ctx.renderer.write_chamber_row(txt, Color::Red, Some(52))?;
+                        ctx.renderer.write_chamber_row(txt, Color::Red, None)?;
                     } else {
                         ctx.renderer.write_chamber_row(txt, theme::dim(), None)?;
                     }

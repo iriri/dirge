@@ -2,12 +2,12 @@
 //! `SubPanel` building block.
 //!
 //! The right panel is a vertical stack of `SubPanel`s — each one a
-//! light-rounded box `╭─[TITLE]─╮ … ╰─╯` with left-aligned content.
+//! light-rounded box `╭─ TITLE ─╮ … ╰─╯` with left-aligned content.
 //! The left panel paints the session vitals (CONTEXT / ACTIVITY / GIT);
 //! when subagents are running it renders their status rows BELOW the
 //! vitals rather than replacing them.
 //!
-//! All horizontals (top frame's [AGENT STATUS] / [SYSTEM] labels)
+//! All horizontals (top frame's AGENT STATUS / SYSTEM labels)
 //! are owned by `TopFrame` — these widgets paint INSIDE
 //! `Layout::left_panel` / `Layout::right_panel` only.
 
@@ -20,7 +20,7 @@ use crate::ui::renderer::{LeftPanelInfo, PanelData, SubagentStatusRow};
 
 use super::chat::crossterm_to_ratatui;
 
-/// One framed sub-panel: `╭─[TITLE]─╮` top, `│ content │` body,
+/// One framed sub-panel: `╭─ TITLE ─╮` top, `│ content │` body,
 /// `╰─╯` bottom. Content lines are LEFT-aligned with one cell of
 /// leading padding — the user explicitly asked for this in
 /// preference to centered content.
@@ -67,8 +67,8 @@ impl<'a> Widget for SubPanel<'a> {
         let bs = self.border_style;
         let inner_w = area.width as usize - 2;
 
-        // Top border: ╭─[TITLE]─╮ centered.
-        let label = format!("[{}]", self.title);
+        // Top border: ╭─ TITLE ─╮ centered.
+        let label = format!(" {} ", self.title);
         let lw = label.chars().count();
         let (lpad, rpad) = if lw >= inner_w {
             (0, 0)
@@ -189,7 +189,6 @@ fn paint_idle_card(
     let dim = RColor::DarkGray;
     let warn = RColor::Yellow;
     let green = RColor::Green;
-    let panel_w = area.width as usize;
     // Leave one trailing cell so a sub-panel's right border doesn't abut
     // the chat-frame divider (same caution as the subagent list).
     let box_w = area.width.saturating_sub(1);
@@ -200,25 +199,8 @@ fn paint_idle_card(
 
     let mut dy = LEFT_PANEL_TOP_PAD;
 
-    // DIRGE banner (centered). Identity (model/prompt) lives in the
-    // status line, so it's not repeated here.
-    let banner = "D I R G E";
-    if dy < area.height {
-        let bw = banner.chars().count();
-        let bpad = panel_w.saturating_sub(bw) / 2;
-        buf.set_stringn(
-            area.x + bpad as u16,
-            area.y + dy,
-            banner,
-            panel_w.saturating_sub(bpad),
-            style,
-        );
-    }
-    dy += 2;
-
     // Helper: render a SubPanel of `lines` at the current `dy` if it
-    // fits, advancing `dy` past it + a 1-row spacer. No-op when out of
-    // vertical room.
+    // fits, advancing `dy` past it. No-op when out of vertical room.
     let place = |buf: &mut Buffer, dy: &mut u16, title: &str, lines: Vec<(String, RColor)>| {
         let h = 2 + lines.len() as u16;
         if box_w < 4 || area.y + *dy + h > area.y + area.height {
@@ -229,7 +211,7 @@ fn paint_idle_card(
             sp = sp.line(t, c);
         }
         sp.render(Rect::new(area.x, area.y + *dy, box_w, h), buf);
-        *dy += h + 1;
+        *dy += h;
     };
 
     // [CONTEXT] — fill bar + tokens/window + compaction count.
@@ -278,10 +260,7 @@ fn paint_idle_card(
         }
         v
     });
-    let git_reserve = git_lines
-        .as_ref()
-        .map(|v| 2 + v.len() as u16 + 1)
-        .unwrap_or(0);
+    let git_reserve = git_lines.as_ref().map(|v| 2 + v.len() as u16).unwrap_or(0);
 
     // [AGENTS] — live subagents (green) when any are running, else the
     // empty-state placeholder row, matching the right panel's boxes.
@@ -299,7 +278,7 @@ fn paint_idle_card(
             })
             .collect()
     };
-    let agents_reserve = 2 + agent_lines.len() as u16 + 1;
+    let agents_reserve = 2 + agent_lines.len() as u16;
 
     // [ACTIVITY] — recent tool ticker (newest last). Capped to whatever
     // vertical room is left after CONTEXT and the reserved GIT/AGENTS
@@ -336,7 +315,7 @@ fn paint_idle_card(
 }
 
 /// Right panel widget. Stacks sub-panels vertically in this order:
-/// `[SYSTEM LOAD]`, `[MCP]`, `[LSP]`, `[TODOS]`, `[MODIFIED]`.
+/// `SYSTEM LOAD`, `MCP`, `LSP`, `TODOS`, `MODIFIED`.
 /// Each sub-panel takes its own minimum height; remaining rows go
 /// to the last sub-panel (MODIFIED) so the file list grows on tall
 /// terminals.
@@ -383,7 +362,7 @@ impl<'a> RightPanel<'a> {
 ///
 /// Mirrors the layout math inside `RightPanel::render`: the four
 /// fixed sub-panels (SYSTEM LOAD, MCP, LSP, TODOS) take their
-/// natural height with a one-row spacer between, then MODIFIED
+/// natural height, then MODIFIED
 /// fills whatever's left. Used by the UI loop's mouse handler to
 /// hit-test wheel events against the modified region.
 ///
@@ -413,7 +392,7 @@ pub fn compute_modified_rect(data: &PanelData, area: Rect) -> Option<Rect> {
             // `y` and the remaining-space math below matches the painter.
             break;
         }
-        y += h + 1; // blank spacer
+        y += h;
     }
     let remaining = (area.y + area.height).saturating_sub(y);
     if remaining < 3 {
@@ -450,7 +429,7 @@ const RIGHT_PANEL_TOP_PAD: u16 = 1;
 const RIGHT_PANEL_TRAILING_PAD: u16 = 1;
 /// Amber tone — used for the [SYSTEM] title in the unified top
 /// frame and for all body text inside the right panel.
-const AMBER: RColor = RColor::Rgb(255, 191, 0);
+const AMBER: RColor = RColor::Yellow;
 
 impl<'a> Widget for RightPanel<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
@@ -464,9 +443,9 @@ impl<'a> Widget for RightPanel<'a> {
         // The one issue the agent is actively on (in_progress) — a bright
         // green that stands out from the amber queue so the current focus is
         // obvious at a glance (issue #663).
-        let focus = RColor::Rgb(120, 220, 120);
+        let focus = RColor::Green;
 
-        // [SYSTEM LOAD]
+        // SYSTEM LOAD
         let sysload_panel = match self.data.sysload.as_ref() {
             Some(s) => SubPanel::new("SYSTEM LOAD")
                 .line(format_bar("CPU", s.cpu_pct), body)
@@ -515,7 +494,7 @@ impl<'a> Widget for RightPanel<'a> {
         // MODIFIED is built below with knowledge of the remaining
         // row budget — keep it out of the fixed-height stack.
 
-        // Stack vertically with one blank row between. Top padding pushes the
+        // Stack vertically without gaps. Top padding pushes the
         // first sub-panel down by RIGHT_PANEL_TOP_PAD rows. The boxes are
         // shifted right by `RIGHT_PANEL_TRAILING_PAD` (gap on the divider side)
         // and sized to `area.width - PAD`, so they hug the screen's outer
@@ -535,7 +514,7 @@ impl<'a> Widget for RightPanel<'a> {
             }
             let rect = Rect::new(box_x, y, inner_w, h);
             panel.render(rect, buf);
-            y += h + 1; // blank spacer
+            y += h;
         }
         // MODIFIED: take whatever vertical room is left.
         let modified_top = y;
@@ -603,7 +582,7 @@ pub mod debug {
 
     use super::SubPanel;
 
-    const AMBER: RColor = RColor::Rgb(255, 191, 0);
+    const AMBER: RColor = RColor::Yellow;
     const RIGHT_PANEL_TOP_PAD: u16 = 1;
     const RIGHT_PANEL_TRAILING_PAD: u16 = 1;
 
@@ -658,7 +637,7 @@ pub mod debug {
             let h = debug_panel.height();
             if y + h <= area.y + area.height {
                 debug_panel.render(Rect::new(box_x, y, inner_w, h), buf);
-                y += h + 1;
+                y += h;
             }
 
             // [THREADS]
@@ -676,7 +655,7 @@ pub mod debug {
             let h = threads_panel.height();
             if y + h <= area.y + area.height {
                 threads_panel.render(Rect::new(box_x, y, inner_w, h), buf);
-                y += h + 1;
+                y += h;
             }
 
             // [FRAMES]
@@ -702,7 +681,7 @@ pub mod debug {
             let h = frames_panel.height();
             if y + h <= area.y + area.height {
                 frames_panel.render(Rect::new(box_x, y, inner_w, h), buf);
-                y += h + 1;
+                y += h;
             }
 
             // [VARIABLES]
@@ -726,7 +705,7 @@ pub mod debug {
             let h = variables_panel.height();
             if y + h <= area.y + area.height {
                 variables_panel.render(Rect::new(box_x, y, inner_w, h), buf);
-                y += h + 1;
+                y += h;
             }
 
             // [BREAKPOINTS]
@@ -741,7 +720,7 @@ pub mod debug {
             let h = bp_panel.height();
             if y + h <= area.y + area.height {
                 bp_panel.render(Rect::new(box_x, y, inner_w, h), buf);
-                y += h + 1;
+                y += h;
             }
 
             // [OUTPUT] — grow to fill remaining vertical space.
@@ -804,7 +783,7 @@ mod tests {
     use ratatui::Terminal;
     use ratatui::backend::TestBackend;
 
-    /// SubPanel paints the frame and centers the [TITLE] label.
+    /// SubPanel paints the frame and centers the title label.
     #[test]
     fn subpanel_frame_and_title() {
         let mut backend = TestBackend::new(20, 5);
@@ -822,8 +801,8 @@ mod tests {
                 .map(|x| backend.buffer().cell((x, y)).unwrap().symbol().to_string())
                 .collect()
         };
-        // [MCP] is 5 chars in a 18-wide inner band, pad=13, left=6.
-        let expected_top = format!("╭{}[MCP]{}╮", "─".repeat(6), "─".repeat(7));
+        // " MCP " is 5 cells in an 18-wide inner band, pad=13, left=6.
+        let expected_top = format!("╭{} MCP {}╮", "─".repeat(6), "─".repeat(7));
         assert_eq!(row(0), expected_top, "got {:?}", row(0));
         // Body has " a" left-aligned, padded with spaces, with │ borders.
         let body_chars: Vec<char> = row(1).chars().collect();
@@ -964,8 +943,8 @@ mod tests {
         assert_eq!(body_chars[19], '│');
     }
 
-    /// LeftPanel idle state paints the DIRGE banner + the vitals
-    /// sections (CONTEXT / ACTIVITY / GIT) with live data.
+    /// LeftPanel idle state paints the vitals sections (CONTEXT / ACTIVITY /
+    /// GIT) with live data.
     #[test]
     fn left_panel_idle_paints_vitals() {
         use crate::ui::panel_data::{ContextGauge, GitSnapshot};
@@ -1002,22 +981,28 @@ mod tests {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        assert!(dump.contains("D I R G E"), "banner missing:\n{dump}");
-        assert!(dump.contains("CONTEXT"), "context section missing:\n{dump}");
+        assert!(
+            !dump.contains("D I R G E"),
+            "workmark still present:\n{dump}"
+        );
+        assert!(
+            dump.contains(" CONTEXT "),
+            "context section missing:\n{dump}"
+        );
         assert!(dump.contains("80%"), "context pct missing:\n{dump}");
         assert!(
             dump.contains("compaction soon"),
             "fold warning missing:\n{dump}"
         );
         assert!(
-            dump.contains("ACTIVITY"),
+            dump.contains(" ACTIVITY "),
             "activity section missing:\n{dump}"
         );
         assert!(
             dump.contains("cargo test"),
             "activity entry missing:\n{dump}"
         );
-        assert!(dump.contains("GIT"), "git section missing:\n{dump}");
+        assert!(dump.contains(" GIT "), "git section missing:\n{dump}");
         assert!(dump.contains("main"), "git branch missing:\n{dump}");
         assert!(dump.contains("+1 ~2 ?0"), "git counts missing:\n{dump}");
     }
@@ -1061,7 +1046,7 @@ mod tests {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        assert!(dump.contains("AGENTS"), "agents section missing:\n{dump}");
+        assert!(dump.contains(" AGENTS "), "agents section missing:\n{dump}");
         assert!(
             dump.contains("· (none)"),
             "idle AGENTS box should show the empty-state placeholder:\n{dump}"
@@ -1108,7 +1093,7 @@ mod tests {
             })
             .collect();
         let dump = rows.join("\n");
-        assert!(dump.contains("AGENTS"), "agents section missing:\n{dump}");
+        assert!(dump.contains(" AGENTS "), "agents section missing:\n{dump}");
         assert!(
             !dump.contains("researcher"),
             "stale placeholder name should not appear:\n{dump}"
@@ -1117,7 +1102,7 @@ mod tests {
         // Isolate the [AGENTS] box body: rows between the "AGENTS" header
         // (top border) and its bottom border ╰, so assertions target only
         // the box content, not the title bar.
-        let header = rows.iter().position(|r| r.contains("AGENTS")).unwrap();
+        let header = rows.iter().position(|r| r.contains(" AGENTS ")).unwrap();
         let bottom = (header + 1..rows.len())
             .find(|&y| rows[y].contains('╰'))
             .unwrap();
@@ -1179,7 +1164,7 @@ mod tests {
             .collect();
         let dump = rows.join("\n");
         // Isolate the [AGENTS] box body.
-        let header = rows.iter().position(|r| r.contains("AGENTS")).unwrap();
+        let header = rows.iter().position(|r| r.contains(" AGENTS ")).unwrap();
         let bottom = (header + 1..rows.len())
             .find(|&y| rows[y].contains('╰'))
             .unwrap();
@@ -1227,9 +1212,9 @@ mod tests {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        assert!(dump.contains("CONTEXT"), "context missing:\n{dump}");
+        assert!(dump.contains(" CONTEXT "), "context missing:\n{dump}");
         assert!(
-            dump.contains("GIT") && dump.contains("main"),
+            dump.contains(" GIT ") && dump.contains("main"),
             "GIT dropped on a short panel:\n{dump}"
         );
     }
@@ -1258,7 +1243,7 @@ mod tests {
                 ..layout.right_panel.x + layout.right_panel.width)
                 .map(|x| backend.buffer().cell((x, y)).unwrap().symbol().to_string())
                 .collect();
-            for t in ["[SYSTEM LOAD]", "[MCP]", "[LSP]", "[TODOS]", "[MODIFIED]"] {
+            for t in ["SYSTEM LOAD", "MCP", "LSP", "TODOS", "MODIFIED"] {
                 if row.contains(t) && !titles_found.contains(&t) {
                     titles_found.push(t);
                 }
@@ -1267,7 +1252,7 @@ mod tests {
         // All five titles should appear (assuming tall enough terminal).
         assert_eq!(
             titles_found,
-            vec!["[SYSTEM LOAD]", "[MCP]", "[LSP]", "[TODOS]", "[MODIFIED]"],
+            vec!["SYSTEM LOAD", "MCP", "LSP", "TODOS", "MODIFIED"],
         );
 
         // The MCP server name "server1" should appear too.
@@ -1342,7 +1327,7 @@ mod tests {
     /// that fit. `RightPanel::render` BREAKs and paints MODIFIED in that space;
     /// `compute_modified_rect` used to `return None`, so the painted box was
     /// un-hit-testable (dead wheel scroll, force-reset offset). Both must now
-    /// agree: compute returns a rect and the painted [MODIFIED] title lands
+    /// agree: compute returns a rect and the painted MODIFIED title lands
     /// inside it.
     #[test]
     fn modified_rect_matches_painter_when_a_fixed_panel_overflows() {
@@ -1368,8 +1353,8 @@ mod tests {
                 .map(|x| backend.buffer().cell((x, y)).unwrap().symbol().to_string())
                 .collect()
         };
-        // The painted [MODIFIED] title falls within the compute rect's rows.
-        let title_in_rect = (rect.y..rect.y + rect.height).any(|y| row(y).contains("[MODIFIED]"));
+        // The painted MODIFIED title falls within the compute rect's rows.
+        let title_in_rect = (rect.y..rect.y + rect.height).any(|y| row(y).contains(" MODIFIED "));
         assert!(
             title_in_rect,
             "painted MODIFIED box must lie within the hit-test rect"
@@ -1377,7 +1362,7 @@ mod tests {
     }
 
     /// dirge-sb2n (A): the rendered MODIFIED box is exactly 3 rows tall
-    /// when empty — top border (with the [MODIFIED] title), one "(none)"
+    /// when empty — top border (with the MODIFIED title), one "(none)"
     /// content line, bottom border — proving the render path agrees with
     /// `compute_modified_rect` and the box no longer paints a tall blank
     /// region. Pins the actual user-visible symptom.
@@ -1400,7 +1385,7 @@ mod tests {
         let y_range = layout.right_panel.y..(layout.right_panel.y + layout.right_panel.height);
         let title_y = y_range
             .clone()
-            .find(|&y| row(y).contains("[MODIFIED]"))
+            .find(|&y| row(y).contains(" MODIFIED "))
             .expect("MODIFIED title should render");
         // The first bottom-border row at or after the title closes the box.
         let bottom_y = (title_y + 1..layout.right_panel.y + layout.right_panel.height)
@@ -1442,7 +1427,7 @@ mod tests {
                 .collect()
         };
         let title_y = (layout.right_panel.y..layout.right_panel.y + layout.right_panel.height)
-            .find(|&y| row(y).contains("[MODIFIED]"))
+            .find(|&y| row(y).contains(" MODIFIED "))
             .expect("MODIFIED title");
         let bottom_y = (title_y + 1..layout.right_panel.y + layout.right_panel.height)
             .find(|&y| row(y).contains('╰'))
@@ -1539,14 +1524,14 @@ mod tests {
             .collect::<Vec<_>>()
             .join("\n");
 
-        assert!(dump.contains("[VARIABLES]"), "VARIABLES title:\n{dump}");
+        assert!(dump.contains(" VARIABLES "), "VARIABLES title:\n{dump}");
         assert!(dump.contains("msg = \"hello\""), "variable value:\n{dump}");
         assert!(dump.contains(": String"), "variable type:\n{dump}");
         assert!(dump.contains("x = 42"), "simple variable:\n{dump}");
         assert!(dump.contains("source: 1  func: 2"), "bp counts:\n{dump}");
-        assert!(dump.contains("[DEBUG]"), "DEBUG title:\n{dump}");
-        assert!(dump.contains("[BREAKPOINTS]"), "BREAKPOINTS title:\n{dump}");
-        assert!(dump.contains("[OUTPUT]"), "OUTPUT title:\n{dump}");
+        assert!(dump.contains(" DEBUG "), "DEBUG title:\n{dump}");
+        assert!(dump.contains(" BREAKPOINTS "), "BREAKPOINTS title:\n{dump}");
+        assert!(dump.contains(" OUTPUT "), "OUTPUT title:\n{dump}");
         assert!(dump.contains("hello"), "output:\n{dump}");
     }
 }

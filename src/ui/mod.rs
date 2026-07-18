@@ -95,6 +95,7 @@ use crate::ui::search_rewind::{
     is_placeholder_pattern, open_rewind_picker, rewind_session, suggest_pattern,
 };
 use crate::ui::slash::{SlashOutcome, handle_slash};
+use crate::ui::state::TOOL_ACTIVITY_CAP;
 use crate::ui::status::StatusLine;
 use crate::ui::terminal::TerminalGuard;
 use crate::ui::text_output::{
@@ -342,7 +343,6 @@ pub async fn run_interactive(
     let chord_timeout: Option<std::time::Duration> =
         cfg.chord_timeout_ms.map(std::time::Duration::from_millis);
     let mut chord_deadline: Option<tokio::time::Instant> = None;
-    const TOOL_ACTIVITY_CAP: usize = 8;
     // Seed Up/Down + Ctrl+F history. Prior same-project sessions are
     // mined first (oldest→newest, capped at `max_sessions`) so the
     // current session's own prompts stay most-recent at the tail of

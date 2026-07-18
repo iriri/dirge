@@ -5,6 +5,7 @@ use crate::sync_util::LockExt;
 
 use crate::ui::events::{format_time, render_session, session_preview};
 use crate::ui::slash::{SlashCtx, c_agent, c_result};
+use crate::ui::theme;
 
 pub(crate) async fn cmd_sessions_switch(
     ctx: &mut SlashCtx<'_>,
@@ -29,8 +30,8 @@ pub(crate) async fn cmd_sessions_switch(
                 .map(|n| format!("; prompt: {}", n))
                 .unwrap_or_default();
             ctx.renderer.write_line(
-                &format!("loaded session ({} msgs{})", msg_count, prompt_note),
-                c_agent(),
+                &format!("░ loaded session ({} msgs{})", msg_count, prompt_note),
+                theme::dim(),
             )?;
         }
     } else {
