@@ -174,7 +174,7 @@ mod tests {
                 path: abs.clone(),
                 offset: None,
                 limit: None,
-                line_hashes: None,
+                line_metadata: None,
             })
             .await
             .unwrap();
@@ -207,7 +207,7 @@ mod tests {
                 path: abs,
                 offset: None,
                 limit: None,
-                line_hashes: None,
+                line_metadata: None,
             })
             .await
             .unwrap();

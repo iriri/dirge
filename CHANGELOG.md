@@ -1591,7 +1591,7 @@ CLI changes.
   deleted file is recreated. From the [howard chen
   writeup](https://howardchen.substack.com/p/deepseek-v4-pro-at-5-the-cost-of)'s
   rewind lever.
-- **Hash-anchored editing (`edit_lines` + `read(line_hashes=true)`).** A new
+- **Hash-anchored editing (`edit_lines` + `read(line_metadata=true)`).** A new
   edit path aimed at cheaper models: `read` can prefix each line with a 3-char
   content hash (`42 a3f: ...`), and `edit_lines` replaces a line *range* by
   number — `start_line`, `end_line`, the `expected_hashes` for that range, and

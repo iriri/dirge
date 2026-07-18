@@ -419,10 +419,10 @@ pub struct ReadArgs {
     pub path: String,
     pub offset: Option<usize>,
     pub limit: Option<usize>,
-    /// When true, prefix each line with its 3-char content hash
+    /// When true, include line numbers and 3-char content hashes
     /// (`  42 a3f: ...`) for hash-anchored editing via `edit_lines`.
-    /// Defaults to the plain `  42: ...` numbering.
-    pub line_hashes: Option<bool>,
+    /// Defaults to plain file content without line metadata.
+    pub line_metadata: Option<bool>,
 }
 
 #[derive(Deserialize)]

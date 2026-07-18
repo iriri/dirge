@@ -1,7 +1,7 @@
 //! Hash-anchored line editing.
 //!
 //! `edit_lines` replaces a line *range* in a file, guarded by the
-//! per-line content hashes the model saw via `read(line_hashes=true)`.
+//! per-line content hashes the model saw via `read(line_metadata=true)`.
 //! Instead of reproducing the old text (as `edit` requires), the
 //! model passes `start_line`, `end_line`, the `expected_hashes` for
 //! that range, and the `new_text`. The tool recomputes the hashes
@@ -103,7 +103,7 @@ pub(crate) fn apply_line_edit(
     if end_line > lines.len() {
         return Err(format!(
             "end_line ({end_line}) is past the end of the file ({} lines). \
-             Re-read with line_hashes to get current line numbers.",
+             Re-read with line_metadata to get current line numbers.",
             lines.len()
         ));
     }
@@ -136,7 +136,7 @@ pub(crate) fn apply_line_edit(
     if !mismatches.is_empty() {
         return Err(format!(
             "edit_lines rejected: {} line(s) changed since you read them. \
-             Re-read with line_hashes and retry.\n{}",
+             Re-read with line_metadata and retry.\n{}",
             mismatches.len(),
             mismatches.join("\n")
         ));
@@ -176,7 +176,7 @@ impl Tool for EditLinesTool {
             description: with_contract_hint(
                 "edit_lines",
                 "Replace a range of lines by line number, guarded by per-line content hashes. \
-                 First read the file with line_hashes=true to get `N hhh: ...` lines, then call \
+                 First read the file with line_metadata=true to get `N hhh: ...` lines, then call \
                  edit_lines with start_line/end_line (1-indexed, inclusive), expected_hashes (one \
                  per line in the range, in order), and new_text (the replacement block; empty \
                  deletes the range). Cheaper than `edit` for large blocks — you don't retype the \
@@ -188,7 +188,7 @@ impl Tool for EditLinesTool {
                     "path": { "type": "string", "description": "The absolute path to the file to edit (must be absolute, not relative)", "dirge-hints": {"semantic": "absolute_path"} },
                     "start_line": { "type": "integer", "description": "First line to replace (1-indexed, inclusive)" },
                     "end_line": { "type": "integer", "description": "Last line to replace (1-indexed, inclusive)" },
-                    "expected_hashes": { "type": "array", "items": {"type": "string"}, "description": "The 3-char content hash for each line in [start_line, end_line], in order, exactly as shown by read(line_hashes=true)" },
+                    "expected_hashes": { "type": "array", "items": {"type": "string"}, "description": "The 3-char content hash for each line in [start_line, end_line], in order, exactly as shown by read(line_metadata=true)" },
                     "new_text": { "type": "string", "description": "Replacement text for the range. Empty string deletes the lines." }
                 },
                 "required": ["path", "start_line", "end_line", "expected_hashes", "new_text"]
@@ -214,7 +214,7 @@ impl Tool for EditLinesTool {
         {
             return Err(ToolError::Msg(format!(
                 "edit_lines was blocked because \"{}\" has not been read in this session yet. \
-                 Call read(line_hashes=true) on this path first.",
+                 Call read(line_metadata=true) on this path first.",
                 args.path
             )));
         }

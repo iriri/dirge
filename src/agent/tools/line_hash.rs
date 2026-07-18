@@ -2,7 +2,7 @@
 //!
 //! Hash-anchored editing (see `edit_lines`) lets a model edit a file
 //! by line *range* plus a tiny per-line content hash instead of
-//! reproducing the exact old text. `read(line_hashes=true)` shows the
+//! reproducing the exact old text. `read(line_metadata=true)` shows the
 //! hash beside each line; the model echoes the hashes for the range
 //! it wants to replace, and the edit tool recomputes them from disk
 //! and rejects the edit if any line drifted. The hash is a *guard*

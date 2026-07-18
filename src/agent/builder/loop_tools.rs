@@ -568,7 +568,7 @@ pub async fn build_loop_tools(
         )
         .await,
     );
-    // Hash-anchored line editing (companion to read(line_hashes=true)).
+    // Hash-anchored line editing (companion to read(line_metadata=true)).
     // Mutating → Sequential.
     tools.push(
         wrap(
