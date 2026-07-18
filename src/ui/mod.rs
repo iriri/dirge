@@ -2348,6 +2348,11 @@ pub async fn run_interactive(
                                         renderer.request_repaint();
                                         continue;
                                     }
+                                    Some(KeyAction::Suspend) => {
+                                        #[cfg(unix)]
+                                        terminal::suspend_current_process(&mut renderer, &user_tx);
+                                        continue;
+                                    }
                                     Some(KeyAction::RedrawTerminal) => {
                                         // Escape hatch (dirge-173j): re-enter the
                                         // alt screen + mouse capture + paste and

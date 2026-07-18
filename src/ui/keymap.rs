@@ -81,6 +81,8 @@ pub enum KeyAction {
     /// Cycle the active prompt layer to the next available prompt. Silent —
     /// updates the status-bar badge without writing to the chat log.
     CyclePrompt,
+    /// Suspend dirge and return to the parent shell until continued.
+    Suspend,
     /// Force a full terminal re-assert + repaint (dirge-173j): re-enter the
     /// alternate screen, re-enable mouse capture + bracketed paste, and
     /// repaint. The escape hatch for the case where the terminal was dropped
@@ -158,6 +160,11 @@ impl Command for KeyAction {
             KeyAction::CyclePrompt,
             "cycle_prompt",
             &[(KeyCode::Tab, KeyModifiers::SHIFT)],
+        ),
+        (
+            KeyAction::Suspend,
+            "suspend",
+            &[(KeyCode::Char('z'), KeyModifiers::CONTROL)],
         ),
         (
             KeyAction::RedrawTerminal,
@@ -556,7 +563,7 @@ impl Command for InputAction {
         (
             InputAction::KillToLineStart,
             "kill_to_line_start",
-            &[(KeyCode::Char('u'), KeyModifiers::CONTROL)],
+            &[(KeyCode::Char('j'), KeyModifiers::CONTROL)],
         ),
         (
             InputAction::KillWordBack,
@@ -611,7 +618,7 @@ impl Command for InputAction {
         (
             InputAction::Undo,
             "undo",
-            &[(KeyCode::Char('z'), KeyModifiers::CONTROL)],
+            &[(KeyCode::Char('u'), KeyModifiers::CONTROL)],
         ),
         (
             InputAction::ExternalEditor,
@@ -628,7 +635,6 @@ impl Command for InputAction {
             &[
                 (KeyCode::Enter, KeyModifiers::SHIFT),
                 (KeyCode::Enter, KeyModifiers::ALT),
-                (KeyCode::Char('j'), KeyModifiers::CONTROL),
             ],
         ),
     ];
@@ -753,6 +759,10 @@ mod tests {
         assert_eq!(
             km.resolve(&ev(KeyCode::Char('l'), KeyModifiers::CONTROL)),
             Some(KeyAction::RedrawTerminal)
+        );
+        assert_eq!(
+            km.resolve(&ev(KeyCode::Char('z'), KeyModifiers::CONTROL)),
+            Some(KeyAction::Suspend)
         );
     }
 
@@ -1046,7 +1056,7 @@ mod tests {
                 InputAction::KillToLineEnd,
             ),
             (
-                (KeyCode::Char('u'), KeyModifiers::CONTROL),
+                (KeyCode::Char('j'), KeyModifiers::CONTROL),
                 InputAction::KillToLineStart,
             ),
             (
@@ -1144,7 +1154,6 @@ mod tests {
         for (code, mods) in [
             (KeyCode::Enter, KeyModifiers::SHIFT),
             (KeyCode::Enter, KeyModifiers::ALT),
-            (KeyCode::Char('j'), KeyModifiers::CONTROL),
         ] {
             assert_eq!(
                 km.resolve(&ev(code, mods)),
@@ -1206,7 +1215,7 @@ mod tests {
         // The default Ctrl+U still maps too (adding doesn't drop the default).
         assert_eq!(
             kms.input
-                .resolve(&ev(KeyCode::Char('u'), KeyModifiers::CONTROL)),
+                .resolve(&ev(KeyCode::Char('j'), KeyModifiers::CONTROL)),
             Some(InputAction::KillToLineStart)
         );
         // Global keymap untouched.

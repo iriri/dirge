@@ -839,6 +839,24 @@ pub(crate) fn resume_tui_after_subprocess(
     crate::ui::input_reader::spawn_input_reader(user_tx.clone());
 }
 
+#[cfg(unix)]
+pub(crate) fn suspend_current_process(
+    renderer: &mut crate::ui::renderer::Renderer,
+    user_tx: &tokio::sync::mpsc::UnboundedSender<crate::event::UserEvent>,
+) {
+    if suspend_tui_for_subprocess(user_tx).is_none() {
+        return;
+    }
+
+    let _ = terminal::disable_raw_mode();
+    unsafe {
+        libc::raise(libc::SIGTSTP);
+    }
+    let _ = terminal::enable_raw_mode();
+
+    resume_tui_after_subprocess(renderer, user_tx);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
