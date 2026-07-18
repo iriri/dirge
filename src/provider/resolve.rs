@@ -160,8 +160,9 @@ pub enum ModelSwitch {
 /// Precedence:
 ///   1. A model explicitly pinned on the active provider, or the active
 ///      provider kind's built-in default, stays on the active client.
-///   2. An exact pin on another provider's `model` switches to it.
-///   3. Otherwise infer the id's family ([`model_family`]):
+///   2. If the active provider is OpenRouter or custom then stay on it.
+///   3. An exact pin on another provider's `model` switches to it.
+///   4. Otherwise infer the id's family ([`model_family`]):
 ///      - unclassifiable, or same kind as the active provider → `Keep` (the
 ///        active client already speaks this family; just rename).
 ///      - a different kind with a configured provider of that kind → switch to
@@ -182,7 +183,11 @@ pub fn resolve_model_switch(
     }
 
     let active_kind = active_provider_kind(providers, active);
-    if active_kind.is_some_and(|kind| default_model_for(kind_label(kind)) == model) {
+    let generic_or_default = |kind| {
+        matches!(kind, ProviderKind::OpenRouter | ProviderKind::Custom)
+            || default_model_for(kind_label(kind)) == model
+    };
+    if active_kind.is_some_and(generic_or_default) {
         return ModelSwitch::Keep;
     }
 
@@ -847,6 +852,27 @@ mod resolve_model_switch_tests {
         assert_eq!(
             resolve_model_switch(&providers, "deepseek", "glm-5.2"),
             ModelSwitch::Switch("glm".to_string())
+        );
+    }
+
+    #[test]
+    fn openai_family_id_keeps_active_custom_provider() {
+        let providers =
+            HashMap::from([("terra".to_string(), typed_entry("custom", Some("gpt-5.5")))]);
+
+        assert_eq!(
+            resolve_model_switch(&providers, "terra", "gpt-5.6-terra"),
+            ModelSwitch::Keep
+        );
+    }
+
+    #[test]
+    fn openai_family_id_keeps_active_openrouter_provider() {
+        let providers = HashMap::from([("openrouter".to_string(), entry(Some("openai/gpt-5.5")))]);
+
+        assert_eq!(
+            resolve_model_switch(&providers, "openrouter", "gpt-5.6-terra"),
+            ModelSwitch::Keep
         );
     }
 
